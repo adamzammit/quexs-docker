@@ -3,7 +3,7 @@ version: '2'
 services:
 
   quexs:
-    image: acspri/quexs:remotelime
+    image: acspri/quexs:2.4.0
     build: .
     ports:
       - 8080:80

@@ -1,6 +1,6 @@
 FROM php:7.4-apache
 
-ENV DOWNLOAD_URL https://master.dl.sourceforge.net/project/quexs/quexs/quexs-2.3.1/quexs-2.3.1.zip
+ENV DOWNLOAD_URL https://master.dl.sourceforge.net/project/quexs/quexs/quexs-2.4.0/quexs-2.4.0.zip
 
 # install the PHP extensions we need
 RUN apt-get update && apt-get install -y mariadb-client unzip libpng-dev libjpeg-dev libfreetype6-dev && rm -rf /var/lib/apt/lists/* \
