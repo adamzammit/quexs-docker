@@ -107,31 +107,35 @@ if [[ "$1" == apache2* ]] || [ "$1" == php-fpm ]; then
 
 $stderr = fopen('php://stderr', 'w');
 
-list($host, $socket) = explode(':', $argv[1], 2);
+$host = $argv[1];
+$socket = null;
+if (str_contains($host, ':')) {
+    list($host, $socket) = explode(':', $argv[1], 2);
+}
 $port = 0;
 if (is_numeric($socket)) {
-	$port = (int) $socket;
-	$socket = null;
+    $port = (int) $socket;
+    $socket = null;
 }
 
-$maxTries = 10;
+
+$mysql = false;
 do {
     $con = mysqli_init();
     if (isset($argv[6]) && !empty($argv[6])) {
 	    mysqli_ssl_set($con,NULL,NULL,$argv[6],NULL,NULL);
     }
-    $mysql = mysqli_real_connect($con,$host, $argv[2], $argv[3], '', $port, $socket, MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT);
-        if (!$mysql) {
-                fwrite($stderr, "\n" . 'MySQL Connection Error: (' . $mysql->connect_errno . ') ' . $mysql->connect_error . "\n");
-                --$maxTries;
-                if ($maxTries <= 0) {
-                        exit(1);
-                }
-                sleep(3);
-        }
+    try {
+	    $mysql = mysqli_real_connect($con,$host, $argv[2], $argv[3], '', $port, $socket, MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT);
+	} catch (Exception $e) {
+          fwrite($stderr, $e->getMessage() . " - Trying again in 3 seconds\n");
+          sleep(3);
+    }
 } while (!$mysql);
 
-if (!$con->query('CREATE DATABASE IF NOT EXISTS `' . $con->real_escape_string($argv[4]) . '`')) {
+try {
+	$con->query('CREATE DATABASE IF NOT EXISTS `' . $con->real_escape_string($argv[4]) . '`');
+} catch (Exception $e) {
         fwrite($stderr, "\n" . 'MySQL "CREATE DATABASE" Error: ' . $con->error . "\n");
         $con->close();
         exit(1);
@@ -140,8 +144,12 @@ if (!$con->query('CREATE DATABASE IF NOT EXISTS `' . $con->real_escape_string($a
 // check if database populated
 $con->select_db($con->real_escape_string($argv[4]));
 
-if (!$con->query('SELECT COUNT(*) AS C FROM ' . $con->real_escape_string($argv[4]) . '.outcome')) {
-    fwrite($stderr, "\n" . 'Cannot find queXS database. Will now populate... ' . $mysql->error . "\n");
+
+$dbpop = true;
+try {
+   $con->query('SELECT COUNT(*) AS C FROM ' . $con->real_escape_string($argv[4]) . '.outcome');
+} catch (Exception $e) {
+    fwrite($stderr, "\n" . 'Cannot find queXS database. Will now populate... ' . "\n");
 
     $command = 'mysql'
         . ' --host=' . $host
@@ -157,17 +165,25 @@ if (!$con->query('SELECT COUNT(*) AS C FROM ' . $con->real_escape_string($argv[4
     fwrite($stderr, "\n" . 'Loading queXS US customisations...' . "\n");
     $output2 = shell_exec($command . '/var/www/html/database/queXS_US.sql"');
     fwrite($stderr, "\n" . 'Loaded queXS US customisations: ' . $output2 . "\n");
+	$dbphp = false;
+} 
 
-} else {
-	fwrite($stderr, "\n" . 'queXS Database found. Leaving unchanged.' . "\n");
+if ($dbpop) {
+    fwrite($stderr, "\n" . 'queXS Database found. Leaving unchanged.' . "\n");
 }
 
+
 if (!empty($argv[5])) {
-    if ($con->query('UPDATE ' . $con->real_escape_string($argv[4]) . '.users SET password = \'' . $con->real_escape_string($argv[5]) . '\' WHERE uid = 1')) {
-	    fwrite($stderr, "\n" . 'Updated queXS admin password.' . "\n");
-	} else {
-	    fwrite($stderr, "\n" . 'Failed to update admin password.' .  "\n");
+    $updated = true;
+	try {
+    	$con->query('UPDATE ' . $con->real_escape_string($argv[4]) . '.users SET password = \'' . $con->real_escape_string($argv[5]) . '\' WHERE uid = 1');
+	} catch (Exception $e) {
+    	fwrite($stderr, "\n" . 'Failed to update admin password.' .  "\n");
+        $updated = false;
 	}
+    if ($updated) {
+        fwrite($stderr, "\n" . 'Updated queXS admin password.' . "\n");
+    }
 }
 
 $con->close();

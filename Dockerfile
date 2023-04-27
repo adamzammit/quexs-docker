@@ -1,4 +1,4 @@
-FROM php:7.4-apache
+FROM php:8.1-apache
 
 ENV DOWNLOAD_URL https://master.dl.sourceforge.net/project/quexs/quexs/quexs-2.4.0/quexs-2.4.0.zip
 
