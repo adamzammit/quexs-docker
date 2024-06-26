@@ -8,9 +8,23 @@ services:
       - 8080:80
     environment:
       QUEXS_DB_PASSWORD: example
+      QUEXS_DB_HOST: mysqldb
       QUEXS_PORT: :8080
+    networks:
+      - limesurvey-docker_default
+      - quexs
 
-  mysql:
+  mysqldb:
     image: mariadb:10.5
     environment:
       MYSQL_ROOT_PASSWORD: example
+    networks:
+      - quexs
+
+networks:
+  limesurvey-docker_default:
+     name: limesurvey-docker_default
+     external: true
+  quexs:
+     driver: bridge
+     name: quexs
