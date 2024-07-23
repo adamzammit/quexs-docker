@@ -10,6 +10,8 @@ services:
       QUEXS_DB_PASSWORD: example
       QUEXS_DB_HOST: mysql
       QUEXS_PORT: :8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   mysql:
     image: registry.acspri.org.au/mariadb:10.5
