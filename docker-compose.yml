@@ -3,7 +3,7 @@ version: '2'
 services:
 
   quexs:
-    image: registry.acspri.org.au/quexs:2.5.0
+    image: acspri/quexs:2.5.0
     ports:
       - 8080:80
     environment:
@@ -14,7 +14,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   mysql:
-    image: registry.acspri.org.au/mariadb:10.5
+    image: mariadb:10.5
     environment:
       MYSQL_ROOT_PASSWORD: example
 
