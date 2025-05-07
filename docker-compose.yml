@@ -1,9 +1,7 @@
-version: '2'
-
 services:
 
   quexs:
-    image: acspri/quexs:2.5.0
+    image: acspri/quexs:2.5.1
     ports:
       - 8080:80
     environment:
